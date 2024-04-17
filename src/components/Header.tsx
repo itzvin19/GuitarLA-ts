@@ -1,23 +1,22 @@
-import { CartItem, Guitar } from "../types";
+import { useMemo, Dispatch } from "react";
+import { CartActions, cartState } from "../reducers/cart-reducer";
+import { CartItem } from "../types";
 type HeaderProps = {
-  cart: CartItem[];
-  cleanCart: () => void;
-  removeCart: (id: Guitar["id"]) => void;
-  increaseQuantity: (id: Guitar["id"]) => void;
-  decreaseQuantity: (id: Guitar["id"]) => void;
-  isEmpty: boolean;
-  cartTotal: number;
+  state: cartState;
+  dispatch: Dispatch<CartActions>;
 };
 
 const Header = ({
-  cart,
-  cleanCart,
-  removeCart,
-  increaseQuantity,
-  decreaseQuantity,
-  isEmpty,
-  cartTotal,
+  state,
+  dispatch
 }: HeaderProps) => {
+  const isEmpty = useMemo(() => state.cart.length > 0, [state.cart]);
+
+  const cartTotal = useMemo(
+    () => state.cart.reduce((total, item) => total + (item.quantity * item.price), 0),
+    [state.cart]
+  );
+
   return (
     <header className="py-5 header">
       <div className="container-xl">
@@ -40,7 +39,7 @@ const Header = ({
               />
 
               <div id="carrito" className="bg-white p-3">
-                {isEmpty ? (
+                {!isEmpty ? (
                   <p className="text-center">El carrito esta vacio</p>
                 ) : (
                   <>
@@ -55,7 +54,7 @@ const Header = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {cart.map((guitar: CartItem) => (
+                        {state.cart.map((guitar: CartItem) => (
                           <tr key={guitar.id}>
                             <td>
                               <img
@@ -71,7 +70,10 @@ const Header = ({
                                 type="button"
                                 className="btn btn-dark"
                                 onClick={() => {
-                                  decreaseQuantity(guitar.id);
+                                  dispatch({
+                                    type: "decrease-quantity",
+                                    payload: { id: guitar.id },
+                                  });
                                 }}
                               >
                                 -
@@ -81,7 +83,10 @@ const Header = ({
                                 type="button"
                                 className="btn btn-dark"
                                 onClick={() => {
-                                  increaseQuantity(guitar.id);
+                                  dispatch({
+                                    type: "increase-quantity",
+                                    payload: { id: guitar.id },
+                                  });
                                 }}
                               >
                                 +
@@ -92,7 +97,10 @@ const Header = ({
                                 className="btn btn-danger"
                                 type="button"
                                 onClick={() => {
-                                  removeCart(guitar.id);
+                                  dispatch({
+                                    type: "remove-cart",
+                                    payload: { id: guitar.id },
+                                  });
                                 }}
                               >
                                 X
@@ -110,7 +118,7 @@ const Header = ({
                     <button
                       className="btn btn-dark w-100 mt-3 p-2"
                       onClick={() => {
-                        cleanCart();
+                        dispatch({ type: "clear-cart" });
                       }}
                     >
                       Vaciar Carrito
